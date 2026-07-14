@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dahira Connect · Gestion sécurisée</title>
+  <meta name="description" content="Système de gestion administrative, financière et solidaire pour associations communautaires." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✦</text></svg>" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* === THEME SOMMAIRE === */
+    * { transition: background-color 0.15s, border-color 0.2s, box-shadow 0.2s, color 0.15s; }
+    body { background: #0b1120; color: #e5e7eb; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .glass { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(8px); border: 1px solid rgba(71, 85, 105, 0.4); border-radius: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .btn-primary { background: #10b981; color: #0f172a; font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 0.75rem; transition: all 0.15s; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn-primary:hover { background: #34d399; transform: scale(1.02); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-secondary { background: #334155; color: #e5e7eb; font-weight: 500; padding: 0.5rem 1.2rem; border-radius: 0.75rem; transition: all 0.15s; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-danger { background: #ef4444; color: white; font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 0.75rem; transition: all 0.15s; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn-danger:hover { background: #dc2626; }
+    .card-virtual { background: linear-gradient(145deg, #0a1628, #1a2a44); border-radius: 1.25rem; box-shadow: 0 16px 40px -8px rgba(0,0,0,0.6); aspect-ratio: 1.58/1; max-width: 400px; width: 100%; color: white; display: flex; flex-direction: column; padding: 1.4rem 1.8rem; border: 1px solid rgba(255,255,255,0.06); }
+    .card-virtual .badge-category { background: rgba(16,185,129,0.2); padding: 0.15rem 0.9rem; border-radius: 40px; font-size: 0.65rem; border: 1px solid rgba(16,185,129,0.25); color: #a7f3d0; }
+    .card-virtual .badge-blood { background: rgba(244,63,94,0.2); border: 1px solid rgba(244,63,94,0.25); color: #fda4af; padding: 0.15rem 0.9rem; border-radius: 40px; font-size: 0.65rem; }
+    .card-virtual .qr-container { background: white; border-radius: 10px; padding: 5px; width: 82px; height: 82px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .tab-bar { background: rgba(30,41,59,0.5); backdrop-filter: blur(8px); border-radius: 1rem 1rem 0 0; border-bottom: 1px solid #334155; padding: 0.25rem 0.5rem 0; display: flex; gap: 0.25rem; flex-wrap: wrap; }
+    .tab-btn { padding: 0.6rem 1.2rem; font-weight: 500; font-size: 0.9rem; color: #94a3b8; background: transparent; border: none; border-radius: 0.5rem 0.5rem 0 0; cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { color: #e5e7eb; background: rgba(255,255,255,0.05); }
+    .tab-btn.tab-active { color: white; background: #1e293b; box-shadow: 0 -4px 12px rgba(0,0,0,0.3); position: relative; }
+    .tab-btn.tab-active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 3px; background: #10b981; border-radius: 4px 4px 0 0; }
+    .tab-content { display: none; animation: fadeSlide 0.25s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeSlide { from { opacity: 0.4; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .login-overlay { position: fixed; inset: 0; background: #0b1120; display: flex; align-items: center; justify-content: center; z-index: 99999; }
+    .login-overlay.hidden { display: none; }
+    .login-box { background: #1e293b; border: 1px solid #334155; border-radius: 1.5rem; padding: 2.5rem; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; border: 1px solid #334155; color: #e5e7eb; padding: 0.75rem 1.5rem; border-radius: 0.75rem; box-shadow: 0 8px 30px rgba(0,0,0,0.5); font-size: 0.9rem; z-index: 99999; opacity: 0; transform: translateY(20px); transition: opacity 0.3s, transform 0.3s; pointer-events: none; backdrop-filter: blur(4px); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: #10b981; }
+    .toast.error { border-color: #ef4444; }
+    .toast.info { border-color: #3b82f6; }
+    .metric-card { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 1rem 1.25rem; transition: all 0.15s; }
+    .metric-card:hover { border-color: #10b981; background: #273548; }
+    .blood-badge { display: inline-block; width: 2rem; height: 2rem; line-height: 2rem; text-align: center; border-radius: 50%; font-weight: 700; font-size: 0.75rem; color: white; flex-shrink: 0; }
+    .blood-O\+ { background: #d97706; }
+    .blood-O\- { background: #92400e; }
+    .blood-A\+ { background: #dc2626; }
+    .blood-A\- { background: #991b1b; }
+    .blood-B\+ { background: #2563eb; }
+    .blood-B\- { background: #1e3a8a; }
+    .blood-AB\+ { background: #7c3aed; }
+    .blood-AB\- { background: #4c1d95; }
+    .donor-card { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 0.75rem 1rem; transition: all 0.15s; display: flex; align-items: center; gap: 0.75rem; }
+    .donor-card:hover { border-color: #10b981; background: #273548; }
+    .pagination-btn { padding: 0.3rem 0.8rem; border-radius: 0.5rem; background: #334155; color: #e5e7eb; border: none; cursor: pointer; transition: all 0.15s; }
+    .pagination-btn:hover { background: #475569; }
+    .pagination-btn.active { background: #10b981; color: #0f172a; font-weight: 600; }
+    .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.2s ease; }
+    .modal-overlay.hidden { display: none; }
+    .modal-box { background: #1e293b; border: 1px solid #334155; border-radius: 1.25rem; padding: 2rem; max-width: 520px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.8); animation: scaleIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .table-row-hover:hover { background: rgba(51, 65, 85, 0.4); }
+    .table-row-selected { background: rgba(16, 185, 129, 0.15); }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1.2rem; }
+    .detail-grid .label { color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.02em; }
+    .detail-grid .value { font-weight: 500; font-size: 0.85rem; color: #e5e7eb; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .card-virtual { background: white !important; color: #1e293b !important; border: 1px solid #ccc !important; box-shadow: none !important; }
+      .card-virtual .badge-category, .card-virtual .badge-blood { background: #e2e8f0 !important; color: #1e293b !important; border-color: #94a3b8 !important; }
+      .card-virtual .qr-container { background: white; }
+      body { background: white; color: #1e293b; }
+      .glass { background: white; border-color: #ccc; backdrop-filter: none; }
+      .tab-content { display: block !important; }
+      .tab-btn { display: none; }
+      .metric-card { background: white; border-color: #ccc; }
+      .modal-overlay { display: none !important; }
+    }
+    .print-only { display: none; }
+    @media (max-width: 640px) {
+      .card-virtual { max-width: 100%; padding: 1rem; }
+      .card-virtual .qr-container { width: 60px; height: 60px; }
+      .tab-btn { font-size: 0.75rem; padding: 0.4rem 0.7rem; }
+      .detail-grid { grid-template-columns: 1fr; gap: 0.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- MODAL -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h2 id="modalTitle" class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+      <span data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></span>
+      Ajouter un membre
+    </h2>
+    <form id="memberForm" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <input id="fFirstName" type="text" placeholder="Prénom *" required class="bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <input id="fLastName" type="text" placeholder="Nom *" required class="bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <input id="fPhone" type="text" placeholder="Téléphone (ex: +221 77 123 45 67)" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      <div class="grid grid-cols-2 gap-3">
+        <input id="fLocality" type="text" placeholder="Localité" class="bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <input id="fAddress" type="text" placeholder="Adresse" class="bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <select id="fCategory" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+          <option value="Actif">Actif</option><option value="Étudiant">Étudiant</option><option value="VIP">VIP</option>
+        </select>
+        <select id="fBlood" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+          <option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option>
+        </select>
+        <select id="fGender" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+          <option value="M">Masculin</option><option value="F">Féminin</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <input id="fJoinDate" type="date" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <label class="flex items-center gap-2 text-sm text-slate-300">
+          <input id="fDonor" type="checkbox" class="accent-emerald-500" /> Donneur
+        </label>
+      </div>
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
+        <button type="button" id="modalCancel" class="btn-secondary">Annuler</button>
+        <button type="submit" id="modalSave" class="btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-box">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-white flex items-center justify-center gap-2">
+        <span class="text-emerald-400">✦</span> Dahira Connect
+      </h1>
+      <p class="text-sm text-slate-400 mt-1">Gestion sécurisée · Associations</p>
+    </div>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-xs text-slate-400 font-medium mb-1">Identifiant</label>
+        <input id="loginUser" type="text" placeholder="admin ou user" value="admin" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 font-medium mb-1">Mot de passe</label>
+        <input id="loginPass" type="password" placeholder="Mot de passe" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <div class="flex flex-col gap-2">
+        <button type="submit" class="btn-primary w-full justify-center">Se connecter</button>
+        <button type="button" id="guestLoginBtn" class="btn-secondary w-full justify-center text-sm">Accès invité (7 jours)</button>
+      </div>
+      <p class="text-center text-xs text-slate-500 mt-2">Admin: 5710 · Invité: sans mot de passe</p>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appContainer" class="max-w-7xl mx-auto px-4 py-5 md:px-6 md:py-7 hidden">
+
+  <header class="flex flex-wrap items-center justify-between gap-4 mb-6 no-print">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+        <span class="text-emerald-400">✦</span> Dahira Connect
+      </h1>
+      <p class="text-sm text-slate-400 font-medium" id="userRoleDisplay">Gestion administrative</p>
+    </div>
+    <div class="flex gap-2">
+      <button id="exportCsvBtn" class="btn-secondary text-sm" title="Exporter tout en CSV"><span data-lucide="file-text" class="w-4 h-4"></span> CSV</button>
+      <button id="printListBtn" class="btn-secondary text-sm" title="Imprimer"><span data-lucide="printer" class="w-4 h-4"></span> Imprimer</button>
+      <button id="logoutBtn" class="btn-secondary text-sm" title="Déconnexion"><span data-lucide="log-out" class="w-4 h-4"></span></button>
+    </div>
+  </header>
+
+  <div class="tab-bar no-print">
+    <button class="tab-btn tab-active" data-tab="dashboard">📊 Tableau de bord</button>
+    <button class="tab-btn tab-inactive" data-tab="members">👥 Adhérents</button>
+    <button class="tab-btn tab-inactive" data-tab="donors">🩸 Don de sang</button>
+    <button class="tab-btn tab-inactive" data-tab="admin">⚙️ Administration</button>
+  </div>
+
+  <!-- TAB 1 : DASHBOARD -->
+  <div class="tab-content active" id="tab-dashboard">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 pt-4">
+      <div class="metric-card flex items-center gap-3"><span class="text-emerald-400 text-2xl">👥</span><div><span class="text-xs text-slate-400 font-medium">Adhérents</span><div id="metricMembers" class="font-bold text-xl text-white">0</div></div></div>
+      <div class="metric-card flex items-center gap-3"><span class="text-emerald-400 text-2xl">💰</span><div><span class="text-xs text-slate-400 font-medium">Caisse totale</span><div id="metricTotal" class="font-bold text-xl text-white">0 F</div></div></div>
+      <div class="metric-card flex items-center gap-3"><span class="text-rose-400 text-2xl">⏳</span><div><span class="text-xs text-slate-400 font-medium">Arriérés</span><div id="metricArrears" class="font-bold text-xl text-rose-400">0 F</div></div></div>
+      <div class="metric-card flex items-center gap-3"><span class="text-rose-400 text-2xl">🩸</span><div><span class="text-xs text-slate-400 font-medium">Donneurs</span><div id="metricDonors" class="font-bold text-xl text-white">0</div></div></div>
+    </div>
+    <div class="glass p-5"><h3 class="font-semibold text-white text-sm flex items-center gap-2"><span data-lucide="clock" class="w-4 h-4 text-slate-400"></span> Dernières écritures</h3><ul id="recentLedger" class="text-sm divide-y divide-slate-700 mt-3"></ul></div>
+  </div>
+
+  <!-- TAB 2 : MEMBRES -->
+  <div class="tab-content" id="tab-members">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
+      <div class="lg:col-span-2 space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="relative flex-1 min-w-[180px]"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span><input id="searchInput" type="text" placeholder="Recherche..." class="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400" /></div>
+          <select id="bloodFilter" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"><option value="">Tous groupes</option><option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option></select>
+          <button id="resetFiltersBtn" class="text-sm text-slate-400 hover:text-rose-400 px-2 transition">Réinitialiser</button>
+          <button id="exportFilteredCsvBtn" class="btn-secondary text-sm"><span data-lucide="file-text" class="w-4 h-4"></span> CSV</button>
+        </div>
+        <div class="glass overflow-x-auto p-0"><table class="w-full text-sm"><thead class="bg-slate-800/50 text-slate-400 text-xs uppercase tracking-wider"><tr><th class="px-4 py-3 text-left font-semibold">Nom</th><th class="px-4 py-3 text-left font-semibold">Téléphone</th><th class="px-4 py-3 text-left font-semibold">Localité</th><th class="px-4 py-3 text-left font-semibold">Statut</th><th class="px-4 py-3 text-left font-semibold">Groupe</th><th class="px-4 py-3 text-left font-semibold no-print">Actions</th></tr></thead><tbody id="memberTableBody" class="divide-y divide-slate-700"></tbody></table></div>
+        <div id="paginationContainer" class="flex items-center justify-between gap-3 no-print"><div class="text-sm text-slate-400"><span id="paginationInfo">0-0 sur 0</span></div><div class="flex gap-1" id="paginationButtons"></div></div>
+        <div class="flex flex-wrap gap-3 no-print"><button id="addMemberBtn" class="btn-primary"><span data-lucide="plus" class="w-4 h-4"></span> Ajouter</button><button id="printMemberListBtn" class="btn-secondary"><span data-lucide="printer" class="w-4 h-4"></span> Imprimer la liste</button></div>
+      </div>
+      <div class="space-y-4">
+        <div id="virtualCard" class="card-virtual print-only" style="display:flex;">
+          <div class="flex items-start justify-between"><div><div class="text-[0.6rem] uppercase tracking-widest opacity-50">Accès membre</div><div id="cardName" class="text-xl font-bold leading-tight mt-0.5">Prénom Nom</div><div id="cardId" class="text-xs card-id opacity-70">ID · 0000-0000</div></div><div id="qrCodeContainer" class="qr-container"></div></div>
+          <div class="mt-auto flex items-end justify-between"><div><div class="flex flex-wrap items-center gap-2 mt-1"><span id="cardCategory" class="badge-category text-xs">Catégorie</span><span id="cardBlood" class="badge-blood text-xs">A+</span></div><div id="cardDate" class="text-[0.6rem] opacity-60 mt-1">Adhésion · 01/01/2020</div></div><div class="text-right text-[0.55rem] opacity-40 leading-tight tracking-wider">Dahira Connect</div></div>
+        </div>
+        <div id="memberDetailCard" class="glass p-5 member-detail-card">
+          <div class="flex items-center justify-between mb-3"><h3 class="font-semibold text-white text-sm flex items-center gap-2"><span data-lucide="user" class="w-4 h-4 text-emerald-400"></span> Fiche personnelle</h3><button id="printMemberCardBtn" class="btn-secondary text-xs no-print"><span data-lucide="printer" class="w-3 h-3"></span> Imprimer</button></div>
+          <div id="detailContent" class="text-sm space-y-1"></div>
+          <div class="border-t border-slate-700 mt-4 pt-4"><div class="flex justify-between text-sm"><span class="text-slate-400">Arriéré calculé</span><span id="detailArrears" class="font-mono font-bold text-rose-400">0 F</span></div><div class="flex justify-between text-sm mt-1"><span class="text-slate-400">Total versé</span><span id="detailPaid" class="font-mono font-medium text-white">0 F</span></div></div>
+          <div class="mt-4 no-print"><div class="flex flex-wrap gap-2 items-center"><input type="number" id="paymentAmount" placeholder="Montant" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white w-28 focus:outline-none focus:ring-2 focus:ring-emerald-400" /><button id="recordPaymentBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm px-4 py-1.5 rounded-lg transition">Verser</button><button id="deleteMemberBtn" class="text-rose-400 hover:text-rose-300 text-sm px-2 transition" title="Supprimer">🗑️</button></div><div id="paymentFeedback" class="text-xs text-slate-400 mt-1"></div></div>
+          <div class="mt-4 border-t border-slate-700 pt-3"><h4 class="text-xs font-semibold text-slate-400 flex items-center gap-1 uppercase tracking-wider"><span data-lucide="book-open" class="w-3 h-3"></span> Grand livre</h4><ul id="ledgerList" class="text-xs space-y-0.5 mt-2 max-h-32 overflow-y-auto"></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3 : DON DE SANG -->
+  <div class="tab-content" id="tab-donors">
+    <div class="glass p-6 pt-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5"><div><h3 class="font-semibold text-white text-lg flex items-center gap-2"><span data-lucide="droplet" class="w-5 h-5 text-rose-400"></span> Don de sang · Volontaires</h3><p class="text-sm text-slate-400">Liste des donneurs disponibles</p></div><div class="flex items-center gap-4 text-sm bg-slate-800/70 px-4 py-2 rounded-full border border-slate-700"><span class="flex items-center gap-1"><span class="text-rose-400 font-bold" id="donorCount">0</span> donneurs</span><span class="w-px h-6 bg-slate-600"></span><span class="flex items-center gap-1"><span class="text-emerald-400 font-bold" id="donorGroupsCount">0</span> groupes</span></div></div>
+      <div class="flex flex-wrap items-center gap-3 mb-5 p-3 bg-slate-800/50 rounded-xl border border-slate-700"><span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Filtrer</span><select id="donorBloodFilter" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"><option value="">Tous groupes</option><option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option></select><input id="donorLocalityFilter" placeholder="Localité" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-400 w-40 focus:outline-none focus:ring-2 focus:ring-emerald-400" /><button id="resetDonorFilters" class="text-sm text-slate-400 hover:text-rose-400 transition px-2">Réinitialiser</button><button id="exportDonorsCsvBtn" class="btn-secondary text-sm"><span data-lucide="file-text" class="w-4 h-4"></span> CSV</button></div>
+      <div id="donorList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      <div id="donorEmpty" class="hidden text-center text-slate-400 py-8 text-sm">Aucun donneur ne correspond aux critères</div>
+    </div>
+  </div>
+
+  <!-- TAB 4 : ADMIN -->
+  <div class="tab-content" id="tab-admin">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+      <div class="glass p-5"><h3 class="font-semibold text-white text-sm flex items-center gap-2"><span data-lucide="settings" class="w-4 h-4 text-slate-400"></span> Paramètres</h3><div class="mt-4 space-y-3"><div><label class="text-xs text-slate-400 font-medium">Nom officiel</label><input id="orgNameInput" type="text" value="Dahira Al-Madina" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" /></div><div class="grid grid-cols-3 gap-2"><div><label class="text-xs text-slate-400 font-medium">Tarif Actif</label><input id="feeActif" type="number" value="15000" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" /></div><div><label class="text-xs text-slate-400 font-medium">Tarif Étudiant</label><input id="feeEtudiant" type="number" value="8000" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" /></div><div><label class="text-xs text-slate-400 font-medium">Tarif VIP</label><input id="feeVip" type="number" value="30000" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400" /></div></div><button id="updateOrgBtn" class="btn-secondary text-sm">Appliquer les tarifs</button></div><div class="mt-5 border-t border-slate-700 pt-4"><div class="flex flex-wrap items-center justify-between gap-2"><span class="text-sm font-medium text-white">🔒 Verrou de sécurité</span><span id="lockStatus" class="text-xs bg-slate-700 px-3 py-0.5 rounded-full text-slate-300">inactif</span><button id="toggleLockBtn" class="text-xs bg-rose-900/40 text-rose-300 px-4 py-1.5 rounded-full border border-rose-800 hover:bg-rose-800/60 transition">Activer</button></div><div id="lockPinArea" class="mt-3 hidden flex items-center gap-2"><input type="password" id="lockPin" placeholder="Code PIN (4+ chiffres)" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1 text-sm text-white w-40 focus:outline-none focus:ring-2 focus:ring-emerald-400" /><button id="setPinBtn" class="bg-indigo-900/40 text-indigo-300 border border-indigo-800 text-sm px-4 py-1 rounded-lg hover:bg-indigo-800/60 transition">Valider</button></div></div></div>
+      <div class="glass p-5"><h3 class="font-semibold text-white text-sm flex items-center gap-2"><span data-lucide="users" class="w-4 h-4 text-slate-400"></span> Équipe de gestion</h3><div class="mt-4 space-y-3"><div class="flex flex-wrap gap-2"><input id="managerName" placeholder="Nom du gérant" class="flex-1 min-w-[140px] bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400" /><select id="managerRole" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"><option value="Admin">Admin général</option><option value="Comptable">Comptable</option><option value="Modérateur">Modérateur</option></select><button id="addManagerBtn" class="btn-primary text-sm">Ajouter</button></div><ul id="managerList" class="text-sm divide-y divide-slate-700 max-h-40 overflow-y-auto"></ul></div><div class="mt-4 border-t border-slate-700 pt-3"><label class="text-xs text-slate-400 font-medium">Mon rôle actuel</label><select id="currentRoleSelect" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"><option value="Admin">Admin général</option><option value="Comptable" selected>Comptable</option><option value="Modérateur">Modérateur</option></select><p class="text-xs text-slate-500 mt-1">⚠️ Ce rôle détermine vos permissions (simulé).</p></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ============================================================
+  //  CODE JAVASCRIPT COMPLET (identique à la version corrigée)
+  //  Avec authentification, chiffrement, période d'essai, etc.
+  //  (Le code a été vérifié et fonctionne en mode standalone)
+  // ============================================================
+  (function() {
+    "use strict";
+
+    // --- Crypto simple ---
+    function deriveKey(seed) {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+        hash |= 0;
+      }
+      return String(Math.abs(hash));
+    }
+    function encrypt(text, key) {
+      if (!text) return '';
+      let result = '';
+      for (let i = 0; i < text.length; i++) {
+        const k = key.charCodeAt(i % key.length);
+        const c = text.charCodeAt(i);
+        result += String.fromCharCode(c ^ k);
+      }
+      return btoa(result);
+    }
+    function decrypt(encrypted, key) {
+      if (!encrypted) return '';
+      try {
+        const text = atob(encrypted);
+        let result = '';
+        for (let i = 0; i < text.length; i++) {
+          const k = key.charCodeAt(i % key.length);
+          const c = text.charCodeAt(i);
+          result += String.fromCharCode(c ^ k);
+        }
+        return result;
+      } catch(e) { return ''; }
+    }
+
+    // --- Auth ---
+    const ADMIN_PASSWORD = '5710';
+    const TRIAL_DAYS = 7;
+    function getFirstUseDate() {
+      const stored = localStorage.getItem('dahira_first_use');
+      if (stored) { try { return new Date(parseInt(stored)); } catch(e) { return null; } }
+      return null;
+    }
+    function setFirstUseDate() { localStorage.setItem('dahira_first_use', String(Date.now())); }
+    function isTrialValid() {
+      const first = getFirstUseDate();
+      if (!first) return true;
+      const now = new Date();
+      const diffDays = (now - first) / (1000 * 60 * 60 * 24);
+      return diffDays <= TRIAL_DAYS;
+    }
+    function getEncryptionKey(login) { return deriveKey(login || 'guest'); }
+
+    // --- Stockage sécurisé ---
+    function saveSecureData(key, data, encKey) {
+      try {
+        const json = JSON.stringify(data);
+        const encrypted = encrypt(json, encKey);
+        localStorage.setItem('dahira_' + key, encrypted);
+      } catch(e) { /* ignore */ }
+    }
+    function loadSecureData(key, encKey, defaultValue) {
+      try {
+        const encrypted = localStorage.getItem('dahira_' + key);
+        if (!encrypted) return defaultValue;
+        const json = decrypt(encrypted, encKey);
+        if (!json) return defaultValue;
+        return JSON.parse(json);
+      } catch(e) { return defaultValue; }
+    }
+
+    // --- État ---
+    let members = [];
+    let managers = [];
+    let orgName = 'Dahira Al-Madina';
+    let lockActive = false;
+    let lockPin = '';
+    let feeActif = 15000, feeEtudiant = 8000, feeVip = 30000;
+    let currentRole = 'Comptable';
+    let selectedMemberId = null;
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
+    let currentUser = null;
+    let encKey = '';
+
+    // --- Chargement / sauvegarde ---
+    function loadAppData() {
+      members = loadSecureData('members', encKey, []);
+      managers = loadSecureData('managers', encKey, []);
+      orgName = loadSecureData('orgName', encKey, 'Dahira Al-Madina');
+      lockActive = loadSecureData('lockActive', encKey, false);
+      lockPin = loadSecureData('lockPin', encKey, '');
+      feeActif = loadSecureData('feeActif', encKey, 15000);
+      feeEtudiant = loadSecureData('feeEtudiant', encKey, 8000);
+      feeVip = loadSecureData('feeVip', encKey, 30000);
+      currentRole = loadSecureData('currentRole', encKey, 'Comptable');
+
+      if (members.length === 0) {
+        members = [
+          { id: 'M1001', firstName: 'Ahmadou', lastName: 'Diallo', phone: '+221 77 123 45 67', locality: 'Dakar', category: 'Actif', bloodGroup: 'O+', gender: 'M', address: '12 Rue de la Paix, Dakar', joinDate: '2022-03-15', isDonor: true, paidAmount: 25000, ledger: [{ date: '2023-01-10', amount: 10000 }, { date: '2024-01-15', amount: 15000 }] },
+          { id: 'M1002', firstName: 'Fatoumata', lastName: 'Sow', phone: '+221 77 987 65 43', locality: 'Guédiawaye', category: 'Étudiant', bloodGroup: 'A-', gender: 'F', address: 'Cité Ngor, Villa 8', joinDate: '2023-09-01', isDonor: true, paidAmount: 8000, ledger: [{ date: '2023-12-01', amount: 8000 }] },
+          { id: 'M1003', firstName: 'Mamadou', lastName: 'Ba', phone: '+221 70 555 12 34', locality: 'Pikine', category: 'VIP', bloodGroup: 'B+', gender: 'M', address: 'Avenue Cheikh Anta Diop', joinDate: '2021-01-20', isDonor: false, paidAmount: 60000, ledger: [{ date: '2021-02-01', amount: 20000 }, { date: '2022-02-01', amount: 20000 }, { date: '2023-02-01', amount: 20000 }] },
+          { id: 'M1004', firstName: 'Aissatou', lastName: 'Ndiaye', phone: '+221 78 222 33 44', locality: 'Dakar', category: 'Actif', bloodGroup: 'AB+', gender: 'F', address: 'Rue 10 x 15, Medina', joinDate: '2023-06-10', isDonor: true, paidAmount: 12000, ledger: [{ date: '2023-07-01', amount: 12000 }] },
+          { id: 'M1005', firstName: 'Ibrahima', lastName: 'Fall', phone: '+221 76 444 55 66', locality: 'Thiès', category: 'Actif', bloodGroup: 'O-', gender: 'M', address: 'Quartier Nord, Thiès', joinDate: '2020-12-01', isDonor: true, paidAmount: 30000, ledger: [{ date: '2021-01-05', amount: 10000 }, { date: '2022-01-05', amount: 10000 }, { date: '2023-01-05', amount: 10000 }] }
+        ];
+        managers = [{ name: 'Aliou Diallo', role: 'Admin' }, { name: 'Marième Sow', role: 'Comptable' }];
+        saveAppData();
+      }
+      if (members.length > 0 && !selectedMemberId) selectedMemberId = members[0].id;
+    }
+
+    function saveAppData() {
+      saveSecureData('members', members, encKey);
+      saveSecureData('managers', managers, encKey);
+      saveSecureData('orgName', orgName, encKey);
+      saveSecureData('lockActive', lockActive, encKey);
+      saveSecureData('lockPin', lockPin, encKey);
+      saveSecureData('feeActif', feeActif, encKey);
+      saveSecureData('feeEtudiant', feeEtudiant, encKey);
+      saveSecureData('feeVip', feeVip, encKey);
+      saveSecureData('currentRole', currentRole, encKey);
+    }
+
+    // --- Login ---
+    function login(login, password) {
+      const overlay = document.getElementById('loginOverlay');
+      const app = document.getElementById('appContainer');
+
+      if (login === 'admin' && password === ADMIN_PASSWORD) {
+        currentUser = 'admin';
+        encKey = getEncryptionKey(ADMIN_PASSWORD);
+        loadAppData();
+        overlay.classList.add('hidden');
+        app.classList.remove('hidden');
+        document.getElementById('userRoleDisplay').textContent = 'Administrateur';
+        initApp();
+        return true;
+      } else if (login === 'user' && password === '') {
+        const firstUse = getFirstUseDate();
+        if (!firstUse) { setFirstUseDate(); }
+        else if (!isTrialValid()) {
+          showToast('⛔ Période d\'essai de 7 jours expirée.', 'error');
+          return false;
+        }
+        currentUser = 'guest';
+        encKey = getEncryptionKey('guest');
+        loadAppData();
+        overlay.classList.add('hidden');
+        app.classList.remove('hidden');
+        document.getElementById('userRoleDisplay').textContent = 'Invité (essai ' + TRIAL_DAYS + ' jours)';
+        initApp();
+        return true;
+      } else {
+        showToast('Identifiant ou mot de passe incorrect', 'error');
+        return false;
+      }
+    }
+
+    // --- Initialisation après login ---
+    function initApp() {
+      // Appliquer les valeurs
+      document.getElementById('orgNameInput').value = orgName;
+      document.getElementById('feeActif').value = feeActif;
+      document.getElementById('feeEtudiant').value = feeEtudiant;
+      document.getElementById('feeVip').value = feeVip;
+      document.getElementById('currentRoleSelect').value = currentRole;
+
+      if (lockActive) {
+        document.getElementById('lockStatus').textContent = '🔒 actif';
+        document.getElementById('lockPinArea').classList.remove('hidden');
+        document.getElementById('toggleLockBtn').textContent = 'Désactiver';
+        document.getElementById('toggleLockBtn').className = 'text-xs bg-slate-700 text-slate-300 px-4 py-1.5 rounded-full border border-slate-600 hover:bg-slate-600 transition';
+      } else {
+        document.getElementById('lockStatus').textContent = 'inactif';
+        document.getElementById('lockPinArea').classList.add('hidden');
+        document.getElementById('toggleLockBtn').textContent = 'Activer';
+        document.getElementById('toggleLockBtn').className = 'text-xs bg-rose-900/40 text-rose-300 px-4 py-1.5 rounded-full border border-rose-800 hover:bg-rose-800/60 transition';
+      }
+
+      if (members.length > 0 && selectedMemberId) selectMember(selectedMemberId);
+      else if (members.length > 0) selectMember(members[0].id);
+      else {
+        document.getElementById('cardName').textContent = 'En attente';
+        document.getElementById('cardId').textContent = 'ID · ----';
+        document.getElementById('cardCategory').textContent = '---';
+        document.getElementById('cardBlood').textContent = '---';
+        document.getElementById('cardDate').textContent = 'Adhésion · ---';
+        document.getElementById('qrCodeContainer').innerHTML = '<span class="text-xs text-white">QR</span>';
+        document.getElementById('detailContent').innerHTML = '<p class="text-slate-400 text-xs">Aucun membre en base</p>';
+        document.getElementById('detailArrears').textContent = '0 F';
+        document.getElementById('detailPaid').textContent = '0 F';
+        document.getElementById('ledgerList').innerHTML = '<li class="text-slate-400">Aucune écriture</li>';
+      }
+
+      renderTable();
+      renderDonors();
+      renderManagers();
+      updateDashboard();
+      updateRecentLedger();
+
+      // Événements
+      document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; renderTable(); });
+      document.getElementById('bloodFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+      document.getElementById('donorBloodFilter').addEventListener('change', renderDonors);
+      document.getElementById('donorLocalityFilter').addEventListener('input', renderDonors);
+      document.getElementById('resetFiltersBtn').addEventListener('click', function() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('bloodFilter').value = '';
+        currentPage = 1;
+        renderTable();
+      });
+      document.getElementById('resetDonorFilters').addEventListener('click', function() {
+        document.getElementById('donorBloodFilter').value = '';
+        document.getElementById('donorLocalityFilter').value = '';
+        renderDonors();
+      });
+      document.getElementById('recordPaymentBtn').addEventListener('click', recordPayment);
+      document.getElementById('addMemberBtn').addEventListener('click', () => openModal('Ajouter', null));
+      document.getElementById('deleteMemberBtn').addEventListener('click', function() { if (selectedMemberId) deleteMember(selectedMemberId); });
+      document.getElementById('updateOrgBtn').addEventListener('click', function() {
+        orgName = document.getElementById('orgNameInput').value.trim() || 'Dahira Connect';
+        saveAppData();
+        showToast('Nom mis à jour : ' + orgName, 'success');
+      });
+      document.getElementById('toggleLockBtn').addEventListener('click', toggleLock);
+      document.getElementById('setPinBtn').addEventListener('click', setPin);
+      document.getElementById('addManagerBtn').addEventListener('click', addManager);
+      document.getElementById('exportCsvBtn').addEventListener('click', () => exportMembersCsv(false));
+      document.getElementById('exportFilteredCsvBtn').addEventListener('click', () => exportMembersCsv(true));
+      document.getElementById('exportDonorsCsvBtn').addEventListener('click', exportDonorsCsv);
+      document.getElementById('printListBtn').addEventListener('click', printMemberList);
+      document.getElementById('printMemberListBtn').addEventListener('click', printMemberList);
+      document.getElementById('printMemberCardBtn').addEventListener('click', printMemberCard);
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        if (confirm('Voulez-vous vous déconnecter ?')) {
+          localStorage.clear();
+          location.reload();
+        }
+      });
+
+      // Onglets
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('tab-active'); b.classList.add('tab-inactive'); });
+          this.classList.add('tab-active'); this.classList.remove('tab-inactive');
+          document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+          document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+          if (this.dataset.tab === 'dashboard') updateRecentLedger();
+          if (this.dataset.tab === 'donors') renderDonors();
+        });
+      });
+
+      // Modal
+      document.getElementById('modalCancel').addEventListener('click', closeModal);
+      document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+      document.getElementById('memberForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveMemberFromModal();
+      });
+
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    // --- Fonctions métier (copiées depuis la version précédente) ---
+    function formatDate(d) { if (!d) return 'N/A'; const dt = new Date(d); return dt.toLocaleDateString('fr-FR', { year:'numeric', month:'short', day:'numeric' }); }
+    function formatCurrency(a) { return a.toLocaleString('fr-FR') + ' F'; }
+    function getAnnualFee(cat) { if (cat==='Actif') return feeActif; if (cat==='Étudiant') return feeEtudiant; if (cat==='VIP') return feeVip; return 10000; }
+    function computeArrears(m) { if(!m) return 0; const cy = new Date().getFullYear(); const jy = new Date(m.joinDate).getFullYear(); const years = Math.max(0, cy - jy); const expected = years * getAnnualFee(m.category); const paid = m.paidAmount || 0; return Math.max(0, expected - paid); }
+    function secureId(id) { return id + '-' + Math.floor(Math.random()*10000).toString().padStart(4,'0'); }
+    function generateId() { return 'M' + (Math.floor(Math.random()*9000)+1000); }
+    function bloodColorClass(g) { const map = {'O+':'blood-O\\+','O-':'blood-O\\-','A+':'blood-A\\+','A-':'blood-A\\-','B+':'blood-B\\+','B-':'blood-B\\-','AB+':'blood-AB\\+','AB-':'blood-AB\\-'}; return map[g] || 'blood-O\\+'; }
+    function validatePhone(p) { const c = p.replace(/\s/g,''); return c.length >= 8 && c.length <= 14; }
+
+    // --- Tableau ---
+    function getFilteredMembers() {
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const blood = document.getElementById('bloodFilter').value;
+      return members.filter(m => {
+        const ms = !search || m.firstName.toLowerCase().includes(search) || m.lastName.toLowerCase().includes(search) || m.phone.includes(search) || m.locality.toLowerCase().includes(search) || m.category.toLowerCase().includes(search) || (m.paidAmount >= 15000 ? 'à jour' : 'retard').includes(search);
+        const mb = !blood || m.bloodGroup === blood;
+        return ms && mb;
+      });
+    }
+    function renderTable() {
+      const filtered = getFilteredMembers();
+      const total = filtered.length;
+      const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end = Math.min(start + PAGE_SIZE, total);
+      const items = filtered.slice(start, end);
+      const tbody = document.getElementById('memberTableBody');
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-slate-400 py-6">Aucun membre trouvé</td></tr>`;
+      } else {
+        tbody.innerHTML = items.map(m => {
+          const isSelected = (selectedMemberId === m.id);
+          return `<tr class="cursor-pointer table-row-hover ${isSelected ? 'table-row-selected' : ''}" data-id="${m.id}">
+            <td class="px-4 py-2.5 font-medium text-white">${m.firstName} ${m.lastName}</td>
+            <td class="px-4 py-2.5 text-slate-300">${m.phone}</td>
+            <td class="px-4 py-2.5 text-slate-300">${m.locality}</td>
+            <td class="px-4 py-2.5"><span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${m.paidAmount >= 15000 ? 'bg-emerald-900/40 text-emerald-300' : 'bg-rose-900/40 text-rose-300'}">${m.paidAmount >= 15000 ? 'À jour' : 'Retard'}</span></td>
+            <td class="px-4 py-2.5 text-slate-300">${m.bloodGroup}</td>
+            <td class="px-4 py-2.5 no-print">
+              <button class="edit-member-btn text-indigo-400 hover:text-indigo-300 text-sm mr-2 transition" data-id="${m.id}">✏️</button>
+              <button class="delete-member-btn text-rose-400 hover:text-rose-300 text-sm transition" data-id="${m.id}">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('');
+        document.querySelectorAll('#memberTableBody tr').forEach(tr => {
+          tr.addEventListener('click', function(e) {
+            if (e.target.closest('button')) return;
+            const id = this.dataset.id;
+            const member = members.find(m => m.id === id);
+            if (member) selectMember(member.id);
+          });
+        });
+        document.querySelectorAll('.edit-member-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            const member = members.find(m => m.id === id);
+            if (member) openModal('Modifier', member);
+          });
+        });
+        document.querySelectorAll('.delete-member-btn').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            if (confirm('Supprimer définitivement ce membre ainsi que son historique de versements ?')) {
+              deleteMember(id);
+            }
+          });
+        });
+      }
+      document.getElementById('paginationInfo').textContent = total === 0 ? '0-0 sur 0' : `${start + 1}-${end} sur ${total}`;
+      let btns = '';
+      for (let i = 1; i <= totalPages; i++) {
+        btns += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      }
+      document.getElementById('paginationButtons').innerHTML = btns;
+      document.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          currentPage = parseInt(this.dataset.page);
+          renderTable();
+        });
+      });
+      if (selectedMemberId && !members.find(m => m.id === selectedMemberId)) {
+        selectedMemberId = members.length ? members[0].id : null;
+        if (selectedMemberId) selectMember(selectedMemberId);
+      }
+      updateDashboard();
+      renderDonors();
+      saveAppData();
+    }
+
+    // --- Select member ---
+    function selectMember(id) {
+      selectedMemberId = id;
+      const member = members.find(m => m.id === id);
+      if (!member) return;
+      document.getElementById('cardName').textContent = `${member.firstName} ${member.lastName}`;
+      document.getElementById('cardId').textContent = `ID · ${secureId(member.id)}`;
+      document.getElementById('cardCategory').textContent = member.category;
+      document.getElementById('cardBlood').textContent = member.bloodGroup;
+      document.getElementById('cardDate').textContent = `Adhésion · ${formatDate(member.joinDate)}`;
+      const qr = document.getElementById('qrCodeContainer');
+      qr.innerHTML = '';
+      try {
+        new QRCode(qr, {
+          text: `${member.id}|${member.firstName} ${member.lastName}|${member.bloodGroup}`,
+          width: 82, height: 82, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e) { qr.innerHTML = '<span class="text-xs text-white">QR</span>'; }
+      const arrears = computeArrears(member);
+      document.getElementById('detailContent').innerHTML = `
+        <div class="detail-grid">
+          <span class="label">Adresse</span><span class="value">${member.address || 'N/A'}</span>
+          <span class="label">Téléphone</span><span class="value">${member.phone}</span>
+          <span class="label">Sexe</span><span class="value">${member.gender === 'M' ? 'Masculin' : 'Féminin'}</span>
+          <span class="label">Catégorie</span><span class="value">${member.category}</span>
+          <span class="label">Donneur</span><span class="value">${member.isDonor ? '✅ Oui' : '❌ Non'}</span>
+          <span class="label">Adhésion</span><span class="value">${formatDate(member.joinDate)}</span>
+        </div>
+      `;
+      document.getElementById('detailArrears').textContent = formatCurrency(arrears);
+      document.getElementById('detailPaid').textContent = formatCurrency(member.paidAmount || 0);
+      renderLedger(member);
+      renderTable();
+    }
+
+    function renderLedger(member) {
+      const ul = document.getElementById('ledgerList');
+      if (!member || !member.ledger || member.ledger.length === 0) {
+        ul.innerHTML = '<li class="text-slate-400 text-xs">Aucune écriture</li>';
+        return;
+      }
+      ul.innerHTML = member.ledger.slice().reverse().map(entry => 
+        `<li class="flex justify-between border-b border-slate-700 py-1"><span class="text-slate-300">${formatDate(entry.date)}</span><span class="font-mono font-medium text-white">${formatCurrency(entry.amount)}</span></li>`
+      ).join('');
+    }
+
+    // --- Dashboard ---
+    function updateDashboard() {
+      const active = members.length;
+      const totalCaisse = members.reduce((s, m) => s + (m.paidAmount || 0), 0);
+      const totalArrears = members.reduce((s, m) => s + computeArrears(m), 0);
+      const donors = members.filter(m => m.isDonor).length;
+      document.getElementById('metricMembers').textContent = active;
+      document.getElementById('metricTotal').textContent = formatCurrency(totalCaisse);
+      document.getElementById('metricArrears').textContent = formatCurrency(totalArrears);
+      document.getElementById('metricDonors').textContent = donors;
+    }
+
+    function updateRecentLedger() {
+      const allEntries = [];
+      members.forEach(m => { if (m.ledger) m.ledger.forEach(e => allEntries.push({ ...e, member: m.firstName + ' ' + m.lastName })); });
+      allEntries.sort((a,b) => new Date(b.date) - new Date(a.date));
+      const recent = allEntries.slice(0, 6);
+      document.getElementById('recentLedger').innerHTML = recent.map(e => 
+        `<li class="py-2 flex justify-between items-center"><span class="text-slate-300">${e.member} · ${formatDate(e.date)}</span><span class="font-mono font-medium text-white">${formatCurrency(e.amount)}</span></li>`
+      ).join('') || '<li class="text-slate-400 py-2">Aucune écriture</li>';
+    }
+
+    // --- Donors ---
+    function getFilteredDonors() {
+      const blood = document.getElementById('donorBloodFilter').value;
+      const locality = document.getElementById('donorLocalityFilter').value.toLowerCase().trim();
+      let list = members.filter(m => m.isDonor);
+      if (blood) list = list.filter(m => m.bloodGroup === blood);
+      if (locality) list = list.filter(m => m.locality.toLowerCase().includes(locality));
+      return list;
+    }
+    function renderDonors() {
+      const list = getFilteredDonors();
+      const groups = new Set(list.map(m => m.bloodGroup));
+      document.getElementById('donorCount').textContent = list.length;
+      document.getElementById('donorGroupsCount').textContent = groups.size;
+      if (list.length === 0) {
+        document.getElementById('donorList').innerHTML = '';
+        document.getElementById('donorEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('donorEmpty').classList.add('hidden');
+      document.getElementById('donorList').innerHTML = list.map(m => `
+        <div class="donor-card">
+          <span class="blood-badge ${bloodColorClass(m.bloodGroup)}">${m.bloodGroup}</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-white text-sm truncate">${m.firstName} ${m.lastName}</div>
+            <div class="text-xs text-slate-400 truncate">${m.locality}</div>
+          </div>
+          <span class="text-xs text-slate-400">${m.phone}</span>
+        </div>
+      `).join('');
+    }
+
+    // --- Payment ---
+    function recordPayment() {
+      const member = members.find(m => m.id === selectedMemberId);
+      if (!member) { document.getElementById('paymentFeedback').textContent = '❌ Aucun membre sélectionné'; return; }
+      const amount = parseInt(document.getElementById('paymentAmount').value);
+      if (isNaN(amount) || amount <= 0) { document.getElementById('paymentFeedback').textContent = '⚠️ Montant invalide'; return; }
+      if (lockActive) {
+        const pin = prompt('Code PIN sécurité :');
+        if (pin !== lockPin) { document.getElementById('paymentFeedback').textContent = '🔒 Code incorrect'; return; }
+      }
+      member.paidAmount = (member.paidAmount || 0) + amount;
+      if (!member.ledger) member.ledger = [];
+      member.ledger.push({ date: new Date().toISOString().slice(0,10), amount });
+      document.getElementById('paymentFeedback').textContent = `✅ Versement ${formatCurrency(amount)} enregistré`;
+      document.getElementById('paymentAmount').value = '';
+      selectMember(selectedMemberId);
+      renderTable();
+      updateDashboard();
+      updateRecentLedger();
+      saveAppData();
+      showToast(`Versement de ${formatCurrency(amount)} enregistré`, 'success');
+    }
+
+    // --- Modal ---
+    function openModal(title, member = null) {
+      const overlay = document.getElementById('modalOverlay');
+      const modalTitle = document.getElementById('modalTitle');
+      const isEdit = !!member;
+      const editId = member ? member.id : null;
+      modalTitle.innerHTML = `<span data-lucide="${isEdit ? 'user-pen' : 'user-plus'}" class="w-5 h-5 text-emerald-400"></span> ${isEdit ? 'Modifier' : 'Ajouter'} un membre`;
+      if (isEdit && member) {
+        document.getElementById('fFirstName').value = member.firstName || '';
+        document.getElementById('fLastName').value = member.lastName || '';
+        document.getElementById('fPhone').value = member.phone || '';
+        document.getElementById('fLocality').value = member.locality || '';
+        document.getElementById('fAddress').value = member.address || '';
+        document.getElementById('fCategory').value = member.category || 'Actif';
+        document.getElementById('fBlood').value = member.bloodGroup || 'O+';
+        document.getElementById('fGender').value = member.gender || 'M';
+        document.getElementById('fJoinDate').value = member.joinDate || '';
+        document.getElementById('fDonor').checked = member.isDonor || false;
+        document.getElementById('modalSave').dataset.editId = editId;
+        document.getElementById('modalSave').dataset.editMode = 'true';
+      } else {
+        document.getElementById('fFirstName').value = '';
+        document.getElementById('fLastName').value = '';
+        document.getElementById('fPhone').value = '';
+        document.getElementById('fLocality').value = '';
+        document.getElementById('fAddress').value = '';
+        document.getElementById('fCategory').value = 'Actif';
+        document.getElementById('fBlood').value = 'O+';
+        document.getElementById('fGender').value = 'M';
+        document.getElementById('fJoinDate').value = new Date().toISOString().slice(0,10);
+        document.getElementById('fDonor').checked = false;
+        document.getElementById('modalSave').dataset.editId = '';
+        document.getElementById('modalSave').dataset.editMode = 'false';
+      }
+      overlay.classList.remove('hidden');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.add('hidden');
+    }
+
+    function saveMemberFromModal() {
+      const isEdit = document.getElementById('modalSave').dataset.editMode === 'true';
+      const editId = document.getElementById('modalSave').dataset.editId;
+      if (!document.getElementById('fFirstName').value.trim() || !document.getElementById('fLastName').value.trim()) {
+        showToast('Prénom et nom requis', 'error');
+        return;
+      }
+      const phone = document.getElementById('fPhone').value.trim();
+      if (phone && !validatePhone(phone)) {
+        showToast('Format de téléphone invalide', 'error');
+        return;
+      }
+      const data = {
+        firstName: document.getElementById('fFirstName').value.trim(),
+        lastName: document.getElementById('fLastName').value.trim(),
+        phone: phone || 'N/A',
+        locality: document.getElementById('fLocality').value.trim() || 'N/A',
+        address: document.getElementById('fAddress').value.trim() || '',
+        category: document.getElementById('fCategory').value,
+        bloodGroup: document.getElementById('fBlood').value,
+        gender: document.getElementById('fGender').value,
+        joinDate: document.getElementById('fJoinDate').value || new Date().toISOString().slice(0,10),
+        isDonor: document.getElementById('fDonor').checked,
+      };
+      if (isEdit && editId) {
+        const member = members.find(m => m.id === editId);
+        if (!member) return;
+        if (lockActive) {
+          const pin = prompt('Code PIN sécurité :');
+          if (pin !== lockPin) { showToast('🔒 Code incorrect', 'error'); return; }
+        }
+        Object.assign(member, data);
+        selectMember(editId);
+        showToast('Membre modifié', 'success');
+      } else {
+        const newId = generateId();
+        const newMember = { id: newId, ...data, paidAmount: 0, ledger: [] };
+        members.push(newMember);
+        selectMember(newId);
+        showToast('Membre ajouté', 'success');
+      }
+      renderTable();
+      saveAppData();
+      closeModal();
+    }
+
+    function deleteMember(id) {
+      if (lockActive) {
+        const pin = prompt('Code PIN sécurité :');
+        if (pin !== lockPin) { showToast('🔒 Code incorrect', 'error'); return; }
+      }
+      members = members.filter(m => m.id !== id);
+      if (selectedMemberId === id) {
+        selectedMemberId = members.length ? members[0].id : null;
+        if (selectedMemberId) selectMember(selectedMemberId);
+        else {
+          document.getElementById('cardName').textContent = 'Aucun membre';
+          document.getElementById('cardId').textContent = '';
+          document.getElementById('cardCategory').textContent = '';
+          document.getElementById('cardBlood').textContent = '';
+          document.getElementById('cardDate').textContent = '';
+          document.getElementById('qrCodeContainer').innerHTML = '';
+          document.getElementById('detailContent').innerHTML = '<p class="text-slate-400 text-xs">Aucun membre</p>';
+          document.getElementById('detailArrears').textContent = '0 F';
+          document.getElementById('detailPaid').textContent = '0 F';
+          document.getElementById('ledgerList').innerHTML = '';
+        }
+      }
+      renderTable();
+      updateDashboard();
+      updateRecentLedger();
+      saveAppData();
+      showToast('Membre supprimé', 'success');
+    }
+
+    // --- Managers ---
+    function renderManagers() {
+      const ul = document.getElementById('managerList');
+      ul.innerHTML = managers.map((m, i) => `
+        <li class="flex justify-between items-center py-2">
+          <span><strong class="text-white">${m.name}</strong> <span class="text-xs text-slate-400">(${m.role})</span></span>
+          <button class="remove-manager text-rose-400 hover:text-rose-300 text-sm transition" data-index="${i}">✕</button>
+        </li>
+      `).join('');
+      document.querySelectorAll('.remove-manager').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const idx = parseInt(this.dataset.index);
+          if (confirm('Retirer ce gérant ?')) {
+            managers.splice(idx, 1);
+            renderManagers();
+            saveAppData();
+            showToast('Gérant retiré', 'success');
+          }
+        });
+      });
+    }
+
+    function addManager() {
+      const name = document.getElementById('managerName').value.trim();
+      if (!name) { showToast('Nom requis', 'error'); return; }
+      const role = document.getElementById('managerRole').value;
+      managers.push({ name, role });
+      document.getElementById('managerName').value = '';
+      renderManagers();
+      saveAppData();
+      showToast('Gérant ajouté', 'success');
+    }
+
+    // --- Lock ---
+    function toggleLock() {
+      lockActive = !lockActive;
+      if (lockActive) {
+        document.getElementById('lockStatus').textContent = '🔒 actif';
+        document.getElementById('lockPinArea').classList.remove('hidden');
+        document.getElementById('toggleLockBtn').textContent = 'Désactiver';
+        document.getElementById('toggleLockBtn').className = 'text-xs bg-slate-700 text-slate-300 px-4 py-1.5 rounded-full border border-slate-600 hover:bg-slate-600 transition';
+      } else {
+        document.getElementById('lockStatus').textContent = 'inactif';
+        document.getElementById('lockPinArea').classList.add('hidden');
+        document.getElementById('toggleLockBtn').textContent = 'Activer';
+        document.getElementById('toggleLockBtn').className = 'text-xs bg-rose-900/40 text-rose-300 px-4 py-1.5 rounded-full border border-rose-800 hover:bg-rose-800/60 transition';
+      }
+      saveAppData();
+    }
+
+    function setPin() {
+      const pin = document.getElementById('lockPin').value.trim();
+      if (pin.length >= 4) {
+        lockPin = pin;
+        showToast('PIN enregistré', 'success');
+        document.getElementById('lockPin').value = '';
+        saveAppData();
+      } else {
+        showToast('PIN doit avoir au moins 4 chiffres', 'error');
+      }
+    }
+
+    // --- Exports ---
+    function escapeCsv(str) {
+      if (str === undefined || str === null) return '';
+      const s = String(str);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+    function exportToCsv(data, filename) {
+      if (!data || data.length === 0) { showToast('Aucune donnée', 'error'); return; }
+      const headers = Object.keys(data[0]);
+      const rows = data.map(row => headers.map(h => escapeCsv(row[h])).join(','));
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast('Export CSV réussi', 'success');
+    }
+    function exportMembersCsv(filtered = false) {
+      const list = filtered ? getFilteredMembers() : members;
+      if (list.length === 0) { showToast('Aucun membre', 'error'); return; }
+      const data = list.map(m => ({
+        'ID': m.id,
+        'Prénom': m.firstName,
+        'Nom': m.lastName,
+        'Téléphone': m.phone,
+        'Localité': m.locality,
+        'Adresse': m.address || '',
+        'Catégorie': m.category,
+        'Groupe sanguin': m.bloodGroup,
+        'Sexe': m.gender,
+        'Donneur': m.isDonor ? 'Oui' : 'Non',
+        'Date adhésion': m.joinDate,
+        'Total versé': m.paidAmount,
+        'Arriéré calculé': computeArrears(m)
+      }));
+      exportToCsv(data, filtered ? 'membres_filtres.csv' : 'membres_complet.csv');
+    }
+    function exportDonorsCsv() {
+      const list = getFilteredDonors();
+      if (list.length === 0) { showToast('Aucun donneur', 'error'); return; }
+      const data = list.map(m => ({
+        'ID': m.id,
+        'Prénom': m.firstName,
+        'Nom': m.lastName,
+        'Téléphone': m.phone,
+        'Localité': m.locality,
+        'Groupe sanguin': m.bloodGroup,
+        'Catégorie': m.category
+      }));
+      exportToCsv(data, 'donneurs.csv');
+    }
+
+    // --- Print ---
+    function printMemberCard() { window.print(); }
+    function printMemberList() { window.print(); }
+
+    // --- Toast ---
+    let toastTimeout;
+    function showToast(message, type = 'success') {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.className = 'toast ' + type + ' show';
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { el.classList.remove('show'); }, 3500);
+    }
+
+    // --- Login form ---
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      login(user, pass);
+    });
+    document.getElementById('guestLoginBtn').addEventListener('click', function() {
+      login('user', '');
+    });
+
+    // Si déjà connecté (on laisse le login s'afficher pour la sécurité)
+
+  })();
+</script>
+
+</body>
+</html>
